@@ -1,5 +1,6 @@
 package com.dinosaur.dinosaurexploder.utils;
 
+import com.dinosaur.dinosaurexploder.model.Settings;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.scene.media.Media;
@@ -8,11 +9,17 @@ import javafx.scene.media.MediaPlayer;
 public class AudioManager {
   private static AudioManager instance;
   private boolean isMuted = false;
+  private boolean isSfxMuted = false;
   private double volume = 1.0;
+  private double sfxVolume = 1.0;
   private final List<MediaPlayer> activePlayers = new ArrayList<>();
   private MediaPlayer backgroundPlayer;
 
-  private AudioManager() {}
+  private AudioManager() {
+    Settings saved = SettingsProvider.loadSettings();
+    this.volume = saved.getVolume();
+    this.isMuted = saved.isMuted();
+  }
 
   public static AudioManager getInstance() {
     if (instance == null) {
@@ -34,6 +41,18 @@ public class AudioManager {
     return isMuted;
   }
 
+  public void setSfxMuted(boolean muted) {
+    isSfxMuted = muted;
+  }
+
+  public boolean isSfxMuted() {
+    return isSfxMuted;
+  }
+
+  public void setSfxVolume(double volume) {
+    this.sfxVolume = volume;
+  }
+
   public void setVolume(double volume) {
     this.volume = volume;
     if (backgroundPlayer != null) backgroundPlayer.setVolume(volume);
@@ -48,7 +67,7 @@ public class AudioManager {
   }
 
   public void playSound(String soundFile) {
-    if (isMuted) return;
+    if (isSfxMuted) return;
     try {
       String resourcePath = "/assets/sounds/" + soundFile;
       var url = getClass().getResource(resourcePath);
@@ -57,8 +76,8 @@ public class AudioManager {
         return;
       }
       MediaPlayer player = new MediaPlayer(new Media(url.toExternalForm()));
-      player.setVolume(volume);
-      player.setMute(isMuted);
+      player.setVolume(sfxVolume);
+      player.setMute(isSfxMuted);
       player.play();
       activePlayers.add(player);
       player.setOnEndOfMedia(

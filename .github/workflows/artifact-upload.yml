@@ -3,6 +3,12 @@ name: Upload JAR Artifact on PR
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths-ignore:
+      - 'website/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -19,13 +25,14 @@ jobs:
 
     name: Build for ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '21'
+          cache: maven
 
       - name: Build with Maven
         run: mvn clean package
